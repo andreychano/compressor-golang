@@ -24,33 +24,43 @@ func NewLocalFileStorage(basePath string) *LocalFileStorage {
 	}
 }
 
-func (s *LocalFileStorage) Save(ctx context.Context, file domain.File, relativePath string) (string, error) {
+func (s *LocalFileStorage) Save(ctx context.Context, file domain.File, relativePath string) (domain.SavedFile, error) {
 	if err := s.pathValidator.Validate(relativePath); err != nil {
-		return "", fmt.Errorf("access denied: invalid path")
+		return domain.SavedFile{}, fmt.Errorf("access denied: invalid path")
 	}
 
 	fullPath := filepath.Join(s.basePath, relativePath)
 
 	dir := filepath.Dir(fullPath)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return "", fmt.Errorf("failed to create directory %s: %w", dir, err)
+		return domain.SavedFile{}, fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
 
 	dst, err := os.Create(fullPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to create file: %w", err)
+		return domain.SavedFile{}, fmt.Errorf("failed to create file: %w", err)
 	}
-	defer dst.Close()
+	defer func() {
+		_ = dst.Close()
+	}()
 
 	if _, err := file.Content.Seek(0, 0); err != nil {
-		return "", fmt.Errorf("failed to seek file content: %w", err)
+		return domain.SavedFile{}, fmt.Errorf("failed to seek file content: %w", err)
 	}
 
 	if _, err := io.Copy(dst, file.Content); err != nil {
-		return "", fmt.Errorf("failed to write file content: %w", err)
+		return domain.SavedFile{}, fmt.Errorf("failed to write file content: %w", err)
 	}
 
-	return fullPath, nil
+	info, err := dst.Stat()
+	if err != nil {
+		return domain.SavedFile{}, fmt.Errorf("failed to stat saved file: %w", err)
+	}
+
+	return domain.SavedFile{
+		Path:           fullPath,
+		CompressedSize: info.Size(), // file byte size
+	}, nil
 }
 
 func (s *LocalFileStorage) Get(ctx context.Context, relativePath string) (domain.File, error) {
@@ -67,7 +77,7 @@ func (s *LocalFileStorage) Get(ctx context.Context, relativePath string) (domain
 
 	stat, err := f.Stat()
 	if err != nil {
-		f.Close()
+		_ = f.Close()
 		return domain.File{}, fmt.Errorf("failed to get file info: %w", err)
 	}
 

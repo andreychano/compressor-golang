@@ -15,3 +15,9 @@ type Options struct {
 	MaxWidth  int    // Maximum width in pixels
 	MaxHeight int    // Maximum height in pixels
 }
+
+// SaveResult describes result of compress+save operation.
+type SavedFile struct {
+	Path           string // Full path where file is stored (e.g. storage/compressed/...)
+	CompressedSize int64  // Size of compressed file in bytes
+}

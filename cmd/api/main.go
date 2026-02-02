@@ -1,28 +1,47 @@
 package main
 
 import (
-	"log"
+	"context"
+	"net/http"
 
-	"github.com/gin-gonic/gin"
-
-	"github.com/andreychano/compressor-golang/internal/adapter/inbound/http"
+	httpadapter "github.com/andreychano/compressor-golang/internal/adapter/inbound/http"
 	"github.com/andreychano/compressor-golang/internal/adapter/outbound/processor/bimg"
 	"github.com/andreychano/compressor-golang/internal/adapter/outbound/repository/local"
+	"github.com/andreychano/compressor-golang/internal/config"
 	"github.com/andreychano/compressor-golang/internal/core/service"
+	applogger "github.com/andreychano/compressor-golang/internal/logger"
 )
 
 func main() {
-	storage := local.NewLocalFileStorage("storage")
+	ctx := context.Background()
+
+	cfg := config.MustLoad(ctx)
+
+	applogger.Init(cfg.Log.ToGotoolsConfig())
+
+	// --- ОТЛАДКА (ВРЕМЕННО) ---
+	// Это покажет нам, что реально загрузилось
+
+	storage := local.NewLocalFileStorage(cfg.Storage.Path)
 	processor := bimg.NewProcessor()
-	svc := service.NewCompressionService(storage, processor)
+	svc := service.NewCompressionService(storage, *cfg, processor)
 
-	r := gin.Default()
+	mux := http.NewServeMux()
+	h := httpadapter.NewHandler(svc)
+	h.RegisterRoutes(mux)
 
-	h := http.NewHandler(svc)
-	h.RegisterRoutes(r)
+	maxBytes := cfg.HTTP.MaxUploadSizeBytes()
+	handler := httpadapter.MaxUploadSize(maxBytes, mux)
 
-	log.Println("Starting server on :8080...")
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("failed to start server: %v", err)
+	applogger.Log.Info().
+		Str("address", cfg.HTTP.Address).
+		Int64("max_bytes", maxBytes).
+		Str("udp", cfg.Log.UDPAddress).
+		Msg("Starting server")
+
+	if err := http.ListenAndServe(cfg.HTTP.Address, handler); err != nil {
+		applogger.Log.Error().
+			Err(err).
+			Msg("failed to start server")
 	}
 }

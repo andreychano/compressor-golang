@@ -8,6 +8,7 @@ import (
 
 	"github.com/andreychano/compressor-golang/internal/adapter/outbound/processor/bimg"
 	"github.com/andreychano/compressor-golang/internal/adapter/outbound/repository/local"
+	"github.com/andreychano/compressor-golang/internal/config"
 	"github.com/andreychano/compressor-golang/internal/core/domain"
 	"github.com/andreychano/compressor-golang/internal/core/service"
 )
@@ -16,7 +17,7 @@ import (
 type Options struct {
 	Format    string // "jpeg", "png", "webp"
 	Quality   int    // 1–100
-	MaxWidth  int    // 0 = no limit
+	MaxWidth  int    // 0 = no limit (использовать дефолт из cfg.Image или без ограничения)
 	MaxHeight int    // 0 = no limit
 }
 
@@ -81,7 +82,23 @@ func (c *Compressor) Compress(r io.Reader, opts Options) ([]byte, Result, error)
 func NewDefault(basePath string) *Compressor {
 	proc := bimg.NewProcessor()
 	repo := local.NewLocalFileStorage(basePath)
-	svc := service.NewCompressionService(repo, proc)
+
+	cfg := config.Config{
+		Storage: config.Storage{
+			Path:             basePath,
+			CompressedSubdir: "compressed",
+			TmpSubdir:        "tmp",
+		},
+		Image: config.Image{
+			DefaultFormat:  "jpeg",
+			DefaultQuality: 80,
+			MaxWidth:       3840,
+			MaxHeight:      2160,
+			AllowFormats:   []string{"jpeg", "png", "webp"},
+		},
+	}
+
+	svc := service.NewCompressionService(repo, cfg, proc)
 
 	return &Compressor{svc: svc}
 }

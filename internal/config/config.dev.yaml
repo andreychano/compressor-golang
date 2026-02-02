@@ -1,0 +1,26 @@
+http:
+    address: ":8080"
+    read_timeout: "10s"
+    write_timeout: "15s"
+    idle_timeout: "60s"
+    max_upload_size_mb: 20
+
+logger:
+    app: "compressor"
+    service: "compressor-dev"
+    level: "debug"
+    udp_address: ""
+    enable_caller: true
+    console: true
+
+storage:
+    path: "./storage"
+    compressed_subdir: "compressed"
+    tmp_subdir: "tmp"
+
+image:
+    default_format: "jpeg"
+    default_quality: 50
+    max_width: 3840
+    max_height: 2160
+    allow_formats: ["jpeg", "png", "webp"]
