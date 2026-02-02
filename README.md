@@ -1,9 +1,9 @@
 # 📸 Image Compression Service (Go)
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/pesiki-sobachki/compressor-golang)](https://goreportcard.com/report/github.com/pesiki-sobachki/compressor-golang)
-[![GitHub Release](https://img.shields.io/github/v/release/pesiki-sobachki/compressor-golang?style=flat-square)](https://github.com/pesiki-sobachki/compressor-golang/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/andreychano/compressor-golang)](https://goreportcard.com/report/github.com/andreychano/compressor-golang)
+[![GitHub Release](https://img.shields.io/github/v/release/andreychano/compressor-golang?style=flat-square)](https://github.com/andreychano/compressor-golang/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![Docker Pulls](https://img.shields.io/docker/pulls/pesiki-sobachki/compressor-golang?style=flat-square)](https://hub.docker.com/r/pesiki-sobachki/compressor-golang)
+[![Docker Pulls](https://img.shields.io/docker/pulls/andreychano/compressor-golang?style=flat-square)](https://hub.docker.com/r/andreychano/compressor-golang)
 
 ## 📖 Overview
 
